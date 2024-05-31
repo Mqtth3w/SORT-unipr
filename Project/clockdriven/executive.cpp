@@ -31,6 +31,24 @@ void Executive::add_frame(std::vector<size_t> frame)
 	/* ... */
 }
 
+
+
+const char* Executive::stateToString(th_state state) {
+    switch(state) {
+        case START:
+            return "START";
+        case RUNNING:
+            return "RUNNING";
+        case IDLE:
+            return "IDLE";
+        case PENDING:
+            return "PENDING";
+        default:
+            return "Unknown";
+    }
+}
+
+
 void Executive::start()
 {
 	try
@@ -39,17 +57,14 @@ void Executive::start()
 		{
 			assert(p_tasks[id].function); // Fallisce se set_periodic_task() non e' stato invocato per questo id
 			
-			rt::set_affinity(p_tasks[id].thread, rt::affinity("1")); 
 			p_tasks[id].thread = std::thread(&Executive::task_function, std::ref(p_tasks[id]));
+			rt::set_affinity(p_tasks[id].thread, rt::affinity("1"));
 			
-			/* ... */
 		}
 		
-		std::thread exec_thread;
-		rt::this_thread::set_priority(rt::priority::rt_max);
-		rt::set_affinity(exec_thread, rt::affinity("1"));
 		exec_thread = std::thread(&Executive::exec_function, this);
-	
+		rt::set_priority(exec_thread,rt::priority::rt_max);
+		rt::set_affinity(exec_thread, rt::affinity("1"));
 		
 	}
 	catch (rt::permission_error & e)
@@ -70,14 +85,27 @@ void Executive::wait()
 	for (auto & pt: p_tasks)
 		pt.thread.join();
 }
+
+
 //funzione che esegue il thread (vedi linea 36)
 void Executive::task_function(Executive::task_data & task)
 {
-	/* ... */ 
-	//eseguire la fz del thread ovvero task.function()
+	while(true){ //definire con quale stato parte per la prima volta il tread
+		{//monitor
+			std::unique_lock<std::mutex> lock(task.mt);
+
+			while(task.state != PENDING)
+				task.th_c.wait(lock);
+
+			task.state = RUNNING;
+		}									//fare monitor sincro thread ed executive
+		task.function();
+		{//mutex
+			std::unique_lock<std::mutex> lock(task.mt);
+			task.state = IDLE;
+		}
+	}
 	
-	//fare monitor sincro thread ed executive
-	task.function();
 }
 
 void Executive::exec_function() //verificare che, se nel frame c'è un task ancora i running dal precedente, ed è nuovamentre presente nel frame, allora non lo faccio ripartire
@@ -89,16 +117,28 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 	auto last = std::chrono::high_resolution_clock::now();
 	auto point = std::chrono::steady_clock::now();
 	auto next = std::chrono::high_resolution_clock::now();
-
+	std::vector<size_t> frame;
+	rt::priority pry_th;
 	while (true)
 	{
 #ifdef VERBOSE
 		std::cout << "*** Frame n." << frame_id << (frame_id == 0 ? " ******" : "") << std::endl;
 #endif
 		/* Rilascio dei task periodici del frame corrente ... */
-		
-		
-				
+		frame = frames[frame_id];
+		pry_th = rt::priority::rt_max;
+		for (auto & id: frame) {
+			rt::set_priority(p_tasks[id].thread,--pry_th);
+			{
+				std::unique_lock<std::mutex> lock(p_tasks[id].mt);
+				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+				if(p_tasks[id].state != RUNNING){ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
+					p_tasks[id].state = PENDING;
+					p_tasks[id].th_c.notify_one();
+				}
+			}
+		}
+			
 		/* Attesa fino al prossimo inizio frame ... */
 		point += std::chrono::milliseconds(this->frame_length * this->unit_time);
 		std::this_thread::sleep_until(point);
@@ -107,14 +147,30 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 		std::cout << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
 		last = next;
 
-		
 		/* Controllo delle deadline ... */
-		
+		for (auto & id: frame) {
+			std::unique_lock<std::mutex> lock(p_tasks[id].mt);
+			switch (p_tasks[id].state) {
+				case RUNNING:
+					std::cerr << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
+					break;
+				// altri case...
+				case PENDING:
+    			case START:
+					std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
+					break;
+				default:
+					std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
+					break;
+			}
+			/*if(p_tasks[id].state == IDLE) {
+				std::cerr << "Task " << id << " Deadline miss"<< std::endl;
+			}*/
+		}
+
 		if (++frame_id == frames.size())
 		{
 			frame_id = 0;
 		}
 	}
 }
-
-
