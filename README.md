@@ -5,4 +5,4 @@ A simple real time application with a clock driven scheduling in C++.
 This folder contain a general clock driven executive.
 
 ### Project_ap folder
-This folder contain a general clock driven executive with support for aperiodic tasks scheduling in background.
+This folder contain an extended version with support for aperiodic tasks scheduling in background.
