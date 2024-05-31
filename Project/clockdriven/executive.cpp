@@ -129,7 +129,7 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 			frame = frames[frame_id];
 			pry_th = rt::priority::rt_max;
 			for (auto & id: frame) {
-				rt::set_priority(p_tasks[id].thread,--pry_th);
+				rt::set_priority(p_tasks[id].thread, --pry_th);
 				{
 					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
 					if(p_tasks[id].state != RUNNING){ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
@@ -138,7 +138,7 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 					}
 					else{
 						running.push_back(id);
-						rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
+						rt::set_priority(p_tasks[id].thread, rt::priority::rt_min);
 					}
 					std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 				}
