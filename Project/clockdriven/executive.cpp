@@ -73,14 +73,14 @@ void Executive::wait()
 //funzione che esegue il thread (vedi linea 36)
 void Executive::task_function(Executive::task_data & task)
 {
-	/* ... */
+	/* ... */ 
 	//eseguire la fz del thread ovvero task.function()
 	
 	//fare monitor sincro thread ed executive
 	task.function();
 }
 
-void Executive::exec_function()
+void Executive::exec_function() //verificare che, se nel frame c'è un task ancora i running dal precedente, ed è nuovamentre presente nel frame, allora non lo faccio ripartire
 {
 	size_t frame_id = 0; //long unsigned int
 
