@@ -35,7 +35,8 @@ void Executive::add_frame(std::vector<size_t> frame)
 
 
 const char* Executive::stateToString(th_state state) {
-    switch(state) {
+    switch(state) 
+    {
         case RUNNING:
             return "RUNNING";
         case IDLE:
@@ -87,7 +88,8 @@ void Executive::wait()
 
 void Executive::task_function(Executive::task_data & task)
 {
-	while(true){ //definire con quale stato parte per la prima volta il tread
+	while(true)
+	{ //definire con quale stato parte per la prima volta il tread
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
 
@@ -128,15 +130,18 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 			/* Rilascio dei task periodici del frame corrente ... */
 			frame = frames[frame_id];
 			pry_th = rt::priority::rt_max;
-			for (auto & id: frame) {
+			for (auto & id: frame) 
+			{
 				rt::set_priority(p_tasks[id].thread, --pry_th);
 				{
 					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-					if(p_tasks[id].state != RUNNING){ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
+					if (p_tasks[id].state != RUNNING)
+					{ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
 						p_tasks[id].state = PENDING;
 						p_tasks[id].th_c.notify_one();
 					}
-					else{
+					else
+					{
 						running.push_back(id);
 						rt::set_priority(p_tasks[id].thread, rt::priority::rt_min);
 					}
@@ -154,9 +159,12 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 	
 			auto salta_switch = false;
 			/* Controllo delle deadline ... */
-			for (auto & id: frame) {
-				for (auto it = running.begin(); it != running.end(); ) {
-					if (*it == id) {
+			for (auto & id: frame) 
+			{
+				for (auto it = running.begin(); it != running.end(); ) 
+				{
+					if (*it == id) 
+					{
 						it = running.erase(it); // Rimuove l'elemento e ottiene l'iteratore successivo
 						salta_switch = true;
 						continue; // Passa alla prossima iterazione del ciclo
@@ -166,7 +174,8 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 				if (salta_switch)
 					continue;
 				std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-				switch (p_tasks[id].state) {
+				switch (p_tasks[id].state) 
+				{
 					case RUNNING:
 						std::cerr << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
 						break;
