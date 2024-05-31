@@ -8,7 +8,7 @@
 #include <condition_variable>
 #include <thread>
 
-enum th_state {START,RUNNING, IDLE, PENDING};
+enum th_state {RUNNING, IDLE, PENDING};
 
 class Executive
 {
@@ -53,7 +53,7 @@ class Executive
 
 			std::condition_variable th_c;
 
-			th_state state = START;
+			th_state state = IDLE;
 			
 		};
 
