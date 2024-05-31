@@ -14,13 +14,15 @@ Executive::Executive(size_t num_tasks, unsigned int frame_length, unsigned int u
 {
 }
 
+
 void Executive::set_periodic_task(size_t task_id, std::function<void()> periodic_task, unsigned int /* wcet */)
 {
 	assert(task_id < p_tasks.size()); // Fallisce in caso di task_id non corretto (fuori range)
 	
 	p_tasks[task_id].function = periodic_task;
 }
-		
+
+
 void Executive::add_frame(std::vector<size_t> frame)
 {
 	for (auto & id: frame)
@@ -30,7 +32,6 @@ void Executive::add_frame(std::vector<size_t> frame)
 
 	/* ... */
 }
-
 
 
 const char* Executive::stateToString(th_state state) {
@@ -68,14 +69,13 @@ void Executive::start()
 	catch (rt::permission_error & e)
 	{
 		std::cerr << "Error setting RT priorities: " << e.what() << std::endl;
-		//return -1;
 	}
 	
 	/* ... */
-	//mettere in esecuzione l'executive che gestisce i thread, e se stesso ovviamente, sull'unica CPU
-	//quindi eseguira exec_function
-}
 	
+}
+
+
 void Executive::wait()
 {
 	exec_thread.join();
@@ -85,7 +85,6 @@ void Executive::wait()
 }
 
 
-//funzione che esegue il thread (vedi linea 36)
 void Executive::task_function(Executive::task_data & task)
 {
 	while(true){ //definire con quale stato parte per la prima volta il tread
@@ -96,7 +95,7 @@ void Executive::task_function(Executive::task_data & task)
 				task.th_c.wait(lock);
 
 			task.state = RUNNING;
-		}									//fare monitor sincro thread ed executive
+		}//fare monitor sincro thread ed executive
 		task.function();
 		{//mutex
 			std::unique_lock<std::mutex> lock(task.mt);
@@ -106,7 +105,8 @@ void Executive::task_function(Executive::task_data & task)
 	
 }
 
-void Executive::exec_function() //verificare che, se nel frame c'è un task ancora i running dal precedente, ed è nuovamentre presente nel frame, allora non lo faccio ripartire
+
+void Executive::exec_function() //verificare che, se nel frame c'è un task ancora running dal precedente, ed è nuovamentre presente nel frame, allora non lo faccio ripartire
 {
 	size_t frame_id = 0; //long unsigned int
 
