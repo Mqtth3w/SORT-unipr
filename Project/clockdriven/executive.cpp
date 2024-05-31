@@ -116,6 +116,7 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 	auto point = std::chrono::steady_clock::now();
 	auto next = std::chrono::high_resolution_clock::now();
 	std::vector<size_t> frame;
+	std::list<size_t> running;
 	rt::priority pry_th;
 	while (true)
 	{
@@ -133,6 +134,10 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 					p_tasks[id].state = PENDING;
 					p_tasks[id].th_c.notify_one();
 				}
+				else{
+					running.push_back(id);
+					rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
+				}
 				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 			}
 		}
@@ -145,8 +150,19 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 		std::cout << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
 		last = next;
 
+		auto salta_switch = false;
 		/* Controllo delle deadline ... */
 		for (auto & id: frame) {
+			for (auto it = running.begin(); it != running.end(); ) {
+				if (*it == id) {
+					it = running.erase(it); // Rimuove l'elemento e ottiene l'iteratore successivo
+					salta_switch = true;
+					continue; // Passa alla prossima iterazione del ciclo
+				}
+				++it; // Passa all'elemento successivo
+			}
+			if (salta_switch)
+				continue;
 			std::unique_lock<std::mutex> lock(p_tasks[id].mt);
 			switch (p_tasks[id].state) {
 				case RUNNING:
@@ -160,9 +176,6 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 					std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
 					break;
 			}
-			/*if(p_tasks[id].state == IDLE) {
-				std::cerr << "Task " << id << " Deadline miss"<< std::endl;
-			}*/
 		}
 
 		if (++frame_id == frames.size())
