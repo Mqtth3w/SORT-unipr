@@ -35,8 +35,6 @@ void Executive::add_frame(std::vector<size_t> frame)
 
 const char* Executive::stateToString(th_state state) {
     switch(state) {
-        case START:
-            return "START";
         case RUNNING:
             return "RUNNING";
         case IDLE:
@@ -131,11 +129,11 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 			rt::set_priority(p_tasks[id].thread,--pry_th);
 			{
 				std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 				if(p_tasks[id].state != RUNNING){ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
 					p_tasks[id].state = PENDING;
 					p_tasks[id].th_c.notify_one();
 				}
+				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 			}
 		}
 			
@@ -156,7 +154,6 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 					break;
 				// altri case...
 				case PENDING:
-    			case START:
 					std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
 					break;
 				default:
