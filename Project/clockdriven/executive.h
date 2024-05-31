@@ -43,7 +43,8 @@ class Executive
 			std::function<void()> function;
 
 			std::thread thread;
-
+			/* ... */ //Ogni tread ha il proprio mutex e la propria condizion
+							//bool deadlin --> //mettere enum (IDLE,RUNNING,PENDING)
 			/* ... */
 		};
 		
