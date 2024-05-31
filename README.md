@@ -1,8 +1,8 @@
 # Real Time Application
 A simple real time application with a clock driven scheduling in C++.
 
-### Project folder
+### Project
 This folder contain a general clock driven executive.
 
-### Project_ap folder
+### Project_ap
 This folder contain an extended version with support for aperiodic tasks scheduling in background.
