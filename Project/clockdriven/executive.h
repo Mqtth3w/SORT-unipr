@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <thread>
 
+enum th_state {START,RUNNING, IDLE, PENDING};
 
 class Executive
 {
@@ -30,6 +31,9 @@ class Executive
 			frame: lista degli id corrispondenti ai task da eseguire nel frame, in sequenza
 		*/
 		void add_frame(std::vector<size_t> frame);
+
+		/**/
+		static const char* stateToString(th_state state);
 		
 		/* [RUN] Lancia l'applicazione */
 		void start();
@@ -38,16 +42,21 @@ class Executive
 		void wait();
 
 	private:
+
 		struct task_data
 		{
 			std::function<void()> function;
 
 			std::thread thread;
-			/* ... */ //Ogni tread ha il proprio mutex e la propria condizion
-							//bool deadlin --> //mettere enum (IDLE,RUNNING,PENDING)
-			/* ... */
+
+			std::mutex mt;
+
+			std::condition_variable th_c;
+
+			th_state state = START;
+			
 		};
-		
+
 		std::vector<task_data> p_tasks;
 		
 		std::thread exec_thread;
