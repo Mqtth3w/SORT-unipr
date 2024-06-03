@@ -81,6 +81,9 @@ class Executive
 		const std::chrono::milliseconds unit_time; // durata dell'unita di tempo (quanto temporale)
 		
 		/* ... */
+
+		/**/
+		static const char* stateToString(th_state state);
 		
 		static void task_function(task_data & task);
 		
