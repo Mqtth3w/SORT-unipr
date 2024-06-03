@@ -135,7 +135,6 @@ void Executive::exec_function()
 					else 
 					{
 						running.push_back(id);
-						rt::set_priority(p_tasks[id].thread, rt::priority::rt_min);
 					}
 					std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 				}
@@ -170,10 +169,12 @@ void Executive::exec_function()
 				{
 					case RUNNING:
 						std::cerr << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
+						rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
 						break;
 					// altri case...
 					case PENDING:
 						std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
+						rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
 						break;
 					default:
 						std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
