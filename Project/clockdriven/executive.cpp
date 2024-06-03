@@ -156,7 +156,7 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 			}
 				
 			/* Attesa fino al prossimo inizio frame ... */
-			point += std::chrono::milliseconds(this->frame_length * this->unit_time);
+			point += std::chrono::milliseconds(frame_length * unit_time);
 			std::this_thread::sleep_until(point);
 			next = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double, std::milli> elapsed(next - last);
