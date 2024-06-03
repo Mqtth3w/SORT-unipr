@@ -182,7 +182,7 @@ void Executive::exec_function()
 					// altri case...
 					case PENDING:
 						std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
-						rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
+						p_tasks[id].state = IDLE;
 						break;
 					default:
 						std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
