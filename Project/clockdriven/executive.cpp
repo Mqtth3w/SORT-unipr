@@ -1,5 +1,7 @@
 #include <cassert>
 #include <iostream>
+#include <sstream>
+//#include <string>
 
 #define VERBOSE
 
@@ -35,8 +37,7 @@ void Executive::add_frame(std::vector<size_t> frame)
 
 
 const char* Executive::stateToString(th_state state) {
-    switch(state) 
-    {
+    switch(state) {
         case RUNNING:
             return "RUNNING";
         case IDLE:
@@ -69,7 +70,10 @@ void Executive::start()
 	}
 	catch (rt::permission_error & e)
 	{
-		std::cerr << "Error setting RT priorities: " << e.what() << std::endl;
+		std::ostringstream str;
+		str << "Error setting RT priorities: " << e.what() << std::endl;
+		std::cerr << str.str();
+		exit(-1);
 	}
 	
 	/* ... */
@@ -88,8 +92,7 @@ void Executive::wait()
 
 void Executive::task_function(Executive::task_data & task)
 {
-	while(true)
-	{ //definire con quale stato parte per la prima volta il tread
+	while(true){ //definire con quale stato parte per la prima volta il tread
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
 
@@ -111,7 +114,7 @@ void Executive::task_function(Executive::task_data & task)
 void Executive::exec_function() //verificare che, se nel frame c'è un task ancora running dal precedente, ed è nuovamentre presente nel frame, allora non lo faccio ripartire
 {
 	size_t frame_id = 0; //long unsigned int
-
+	std::ostringstream str;
 	/* ... */
 	try
 	{
@@ -122,10 +125,12 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 		std::vector<size_t> frame;
 		std::list<size_t> running;
 		rt::priority pry_th;
+		
 		while (true)
 		{
 #ifdef VERBOSE
-			std::cout << "*** Frame n." << frame_id << (frame_id == 0 ? " ******" : "") << std::endl;
+			str << "*** Frame n." << frame_id << (frame_id == 0 ? " ******" : "") << std::endl;
+			std::cout << str.str();
 #endif
 			/* Rilascio dei task periodici del frame corrente ... */
 			frame = frames[frame_id];
@@ -135,17 +140,18 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 				rt::set_priority(p_tasks[id].thread, --pry_th);
 				{
 					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-					if (p_tasks[id].state != RUNNING)
+					if (p_tasks[id].state != RUNNING) 
 					{ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
 						p_tasks[id].state = PENDING;
 						p_tasks[id].th_c.notify_one();
 					}
-					else
+					else 
 					{
 						running.push_back(id);
 						rt::set_priority(p_tasks[id].thread, rt::priority::rt_min);
 					}
-					std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+					str << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+					std::cout << str.str();
 				}
 			}
 				
@@ -154,7 +160,8 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 			std::this_thread::sleep_until(point);
 			next = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double, std::milli> elapsed(next - last);
-			std::cout << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
+			str << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
+			std::cout << str.str();
 			last = next;
 	
 			auto salta_switch = false;
@@ -177,14 +184,17 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 				switch (p_tasks[id].state) 
 				{
 					case RUNNING:
-						std::cerr << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
+						str << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
+						std::cerr << str.str();
 						break;
 					// altri case...
 					case PENDING:
-						std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
+						str << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
+						std::cerr << str.str();
 						break;
 					default:
-						std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
+						str << "Task " << id << " Finished before its deadline"<< std::endl;
+						std::cerr << str.str();
 						break;
 				}
 			}
@@ -197,6 +207,8 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 	}
 	catch (rt::permission_error & e)
 	{
-		std::cerr << "Error setting RT priorities: " << e.what() << std::endl;
+		str << "Error setting RT priorities: " << e.what() << std::endl;
+		std::cerr << str.str();
+		exit(-1);
 	}
 }
