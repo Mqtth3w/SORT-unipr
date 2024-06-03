@@ -92,7 +92,7 @@ void Executive::wait()
 
 void Executive::task_function(Executive::task_data & task)
 {
-	while(true){ //definire con quale stato parte per la prima volta il tread
+	while(true){ 
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
 
@@ -100,7 +100,7 @@ void Executive::task_function(Executive::task_data & task)
 				task.th_c.wait(lock);
 
 			task.state = RUNNING;
-		}//fare monitor sincro thread ed executive
+		}
 		task.function();
 		{//mutex
 			std::unique_lock<std::mutex> lock(task.mt);
@@ -172,11 +172,11 @@ void Executive::exec_function() //verificare che, se nel frame c'è un task anco
 				{
 					if (*it == id) 
 					{
-						it = running.erase(it); // Rimuove l'elemento e ottiene l'iteratore successivo
+						it = running.erase(it); 
 						salta_switch = true;
-						continue; // Passa alla prossima iterazione del ciclo
+						break; 
 					}
-					++it; // Passa all'elemento successivo
+					++it; 
 				}
 				if (salta_switch)
 					continue;
