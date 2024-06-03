@@ -128,7 +128,7 @@ void Executive::exec_function()
 				{
 					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
 					if (p_tasks[id].state != RUNNING) 
-					{ //Sta ancora eseguendo da un frame precedente, salto l'esecuzione nel frame corrente (se == RUNNING)
+					{ 
 						p_tasks[id].state = PENDING;
 						p_tasks[id].th_c.notify_one();
 					}
