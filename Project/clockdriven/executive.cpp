@@ -65,7 +65,7 @@ void Executive::start()
 	catch (rt::permission_error & e)
 	{
 		std::cerr << "Error setting RT priorities: " << e.what() << std::endl;
-		//return -1;
+		exit(-1);
 	}
 	
 }
@@ -181,7 +181,7 @@ void Executive::exec_function()
 	catch (rt::permission_error & e)
 	{
 		std::cerr << "Error setting RT priorities: " << e.what() << std::endl;
-		//return -1;
+		exit(-1);
 	}
 	
 }
