@@ -14,11 +14,12 @@ Executive::Executive(size_t num_tasks, unsigned int frame_length, unsigned int u
 {
 }
 
-void Executive::set_periodic_task(size_t task_id, std::function<void()> periodic_task, unsigned int /* wcet */)
+void Executive::set_periodic_task(size_t task_id, std::function<void()> periodic_task, unsigned int  wcet)
 {
 	assert(task_id < p_tasks.size()); // Fallisce in caso di task_id non corretto (fuori range)
 	
 	p_tasks[task_id].function = periodic_task;
+	p_tasks[task_id].wcet = wcet;
 }
 
 void Executive::add_frame(std::vector<size_t> frame)
