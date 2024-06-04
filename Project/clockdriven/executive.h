@@ -45,6 +45,8 @@ class Executive
 		{
 			std::function<void()> function;
 
+			unsigned int wcet;
+			
 			std::thread thread;
 
 			std::mutex mt;
