@@ -53,6 +53,8 @@ class Executive
 
 			std::condition_variable th_c;
 
+			bool only_start = true;
+
 			th_state state = IDLE;
 			
 		};
