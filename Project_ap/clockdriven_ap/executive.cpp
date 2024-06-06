@@ -22,6 +22,12 @@ void Executive::set_periodic_task(size_t task_id, std::function<void()> periodic
 	p_tasks[task_id].wcet = wcet;
 }
 
+void Executive::set_aperiodic_task(std::function<void()> aperiodic_task, unsigned int wcet)
+{
+    ap_task.function = aperiodic_task;
+    ap_task.wcet = wcet;
+}
+
 void Executive::add_frame(std::vector<size_t> frame)
 {
 	for (auto & id: frame)
@@ -58,6 +64,10 @@ void Executive::start()
 			
 		}
 		
+		ap_task.thread = std::thread(&Executive::task_function, std::ref(ap_task));
+		rt::set_affinity(ap_task.thread, rt::affinity("1"));
+		rt::set_priority(ap_task.thread,rt::priority::rt_min);
+
 		exec_thread = std::thread(&Executive::exec_function, this);
 		rt::set_priority(exec_thread,rt::priority::rt_max);
 		rt::set_affinity(exec_thread, rt::affinity("1"));
@@ -84,25 +94,26 @@ void Executive::wait()
 
 void Executive::ap_task_request()
 {
-	/* ... */
+	std::unique_lock<std::mutex> lock(ap_task.mt);
+	start_ = true;
 }
 
 void Executive::task_function(Executive::task_data & task)
 {
-	while(true){ //definire con quale stato parte per la prima volta il tread
+	while(true){ 
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
-
+			task.only_start ? task.only_start = false : task.state = IDLE; //Va nel true solo la prima volta (evita che saltino il primo ciclo) se si mette solo " task.state = IDLE" esiste c'è la possibilità che la prima volta che il thread entra dentro il while true, si mette in Idle mentre era stato messo prima in PENDING.
 			while(task.state != PENDING)
 				task.th_c.wait(lock);
 
 			task.state = RUNNING;
-		}//fare monitor sincro thread ed executive
+		}
 		task.function();
-		{//mutex
+		/*{//mutex      //Aggiungendo l'opratore ternario sopra, si evota di creare una doppia zona critica.
 			std::unique_lock<std::mutex> lock(task.mt);
 			task.state = IDLE;
-		}
+		}*/
 	}
 	
 }
@@ -111,7 +122,6 @@ void Executive::exec_function()
 {
 	size_t frame_id = 0; //long unsigned int
 	
-	/* ... */
 	try
 	{
 		//gestire executive
@@ -132,22 +142,33 @@ void Executive::exec_function()
 			pry_th = rt::priority::rt_max;
 			for (auto & id: frame) 
 			{
-				rt::set_priority(p_tasks[id].thread, --pry_th);
+				std::unique_lock<std::mutex> lock(p_tasks[id].mt);
+				if (p_tasks[id].state != RUNNING) 
 				{
-					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-					if (p_tasks[id].state != RUNNING) 
-					{
-						p_tasks[id].state = PENDING;
-						p_tasks[id].th_c.notify_one();
-					}
-					else 
-					{
-						running.push_back(id);
-					}
-					std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+					p_tasks[id].state = PENDING;
+					rt::set_priority(p_tasks[id].thread, --pry_th);
+					p_tasks[id].th_c.notify_one();
 				}
-			}
+				else 
+				{
+					running.push_back(id);
+				}
+				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 				
+			}
+
+			{
+			std::unique_lock<std::mutex> lock(ap_task.mt);
+				if(start_){
+					if(ap_task.state != RUNNING){
+						ap_task.state = PENDING;
+						ap_task.th_c.notify_one();
+					}
+					start_ = false;
+				}
+			}	
+
+
 			/* Attesa fino al prossimo inizio frame ... */
 			point += std::chrono::milliseconds(this->frame_length * this->unit_time);
 			std::this_thread::sleep_until(point);
@@ -156,8 +177,8 @@ void Executive::exec_function()
 			std::cout << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
 			last = next;
 	
-			auto salta_switch = false;
 			/* Controllo delle deadline ... */
+			auto salta_switch = false; //Serve solo per estetica
 			for (auto & id: frame) 
 			{
 				for (auto it = running.begin(); it != running.end(); ) 
@@ -187,6 +208,15 @@ void Executive::exec_function()
 					default:
 						std::cerr << "Task " << id << " Finished before its deadline"<< std::endl;
 						break;
+				}
+			}
+
+			{
+			std::unique_lock<std::mutex> lock(ap_task.mt);
+				if(start_){
+					if(ap_task.state == RUNNING){
+						std::cerr << "Task aperiodic Deadline miss, it's RUNNING ---------------------------------------------------"<< std::endl;
+					}
 				}
 			}
 	
