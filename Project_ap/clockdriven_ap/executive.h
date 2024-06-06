@@ -38,9 +38,6 @@ class Executive
 			frame: lista degli id corrispondenti ai task da eseguire nel frame, in sequenza
 		*/
 		void add_frame(std::vector<size_t> frame);
-
-		/**/
-		static const char* stateToString(th_state state);
 		
 		/* [RUN] Lancia l'applicazione */
 		void start();
@@ -81,7 +78,9 @@ class Executive
 		
 		const unsigned int frame_length; // lunghezza del frame (in quanti temporali)
 		const std::chrono::milliseconds unit_time; // durata dell'unita di tempo (quanto temporale)
-		
+
+		/**/
+		static const char* stateToString(th_state state);
 		
 		static void task_function(task_data & task);
 		
