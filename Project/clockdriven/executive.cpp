@@ -85,17 +85,13 @@ void Executive::task_function(Executive::task_data & task)
 	while(true){ //definire con quale stato parte per la prima volta il tread
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
-
+			task.only_start ? task.only_start = false : task.state = IDLE;
 			while(task.state != PENDING)
 				task.th_c.wait(lock);
 
 			task.state = RUNNING;
 		}//fare monitor sincro thread ed executive
 		task.function();
-		{//mutex
-			std::unique_lock<std::mutex> lock(task.mt);
-			task.state = IDLE;
-		}
 	}
 	
 }
