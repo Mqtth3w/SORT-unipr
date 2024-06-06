@@ -35,7 +35,6 @@ void Executive::add_frame(std::vector<size_t> frame)
 	
 	frames.push_back(frame);
 
-	/* ... */
 }
 
 const char* Executive::stateToString(th_state state) {
@@ -79,7 +78,6 @@ void Executive::start()
 		exit(-1);
 	}
 	
-	/* ... */
 }
 
 void Executive::wait()
@@ -110,7 +108,7 @@ void Executive::task_function(Executive::task_data & task)
 			task.state = RUNNING;
 		}
 		task.function();
-		/*{//mutex      //Aggiungendo l'opratore ternario sopra, si evota di creare una doppia zona critica.
+		/*{//mutex      //Aggiungendo l'operatore ternario sopra, si evita di creare una doppia zona critica.
 			std::unique_lock<std::mutex> lock(task.mt);
 			task.state = IDLE;
 		}*/
@@ -151,7 +149,7 @@ void Executive::exec_function()
 				}
 				else 
 				{
-					running.push_back(id);
+					running.push_back(id); //per non farlo stampare dopo a schermo
 				}
 				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
 				
@@ -185,11 +183,11 @@ void Executive::exec_function()
 				{
 					if (*it == id) 
 					{
-						it = running.erase(it); // Rimuove l'elemento e ottiene l'iteratore successivo
+						it = running.erase(it);
 						salta_switch = true;
-						continue; // Passa alla prossima iterazione del ciclo
+						continue; 
 					}
-					++it; // Passa all'elemento successivo
+					++it; 
 				}
 				if (salta_switch)
 					continue;
@@ -200,7 +198,6 @@ void Executive::exec_function()
 						std::cerr << "Task " << id << " Deadline miss, it's RUNNING"<< std::endl;
 						rt::set_priority(p_tasks[id].thread,rt::priority::rt_min);
 						break;
-					// altri case...
 					case PENDING:
 						std::cerr << "Task " << id << " Deadline miss, wait its turn"<< std::endl;
 						p_tasks[id].state = IDLE;
