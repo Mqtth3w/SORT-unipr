@@ -121,20 +121,19 @@ void Executive::exec_function()
 			pry_th = rt::priority::rt_max;
 			for (auto & id: frame) 
 			{
-				rt::set_priority(p_tasks[id].thread, --pry_th);
-				{
-					std::unique_lock<std::mutex> lock(p_tasks[id].mt);
-					if (p_tasks[id].state != RUNNING) 
-					{ 
-						p_tasks[id].state = PENDING;
-						p_tasks[id].th_c.notify_one();
-					}
-					else 
-					{
-						running.push_back(id);
-					}
-					std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+				std::unique_lock<std::mutex> lock(p_tasks[id].mt);
+				if (p_tasks[id].state != RUNNING) 
+				{ 
+					p_tasks[id].state = PENDING;
+					rt::set_priority(p_tasks[id].thread, --pry_th);
+					p_tasks[id].th_c.notify_one();
 				}
+				else 
+				{
+					running.push_back(id);
+				}
+				std::cout << "*** Task n." << id << " , State = " << stateToString(p_tasks[id].state) << std::endl;
+				
 			}
 				
 			/* Attesa fino al prossimo inizio frame ... */
