@@ -122,7 +122,6 @@ void Executive::exec_function()
 	
 	try
 	{
-		//gestire executive
 		auto last = std::chrono::high_resolution_clock::now();
 		auto point = std::chrono::steady_clock::now();
 		auto next = std::chrono::high_resolution_clock::now();
