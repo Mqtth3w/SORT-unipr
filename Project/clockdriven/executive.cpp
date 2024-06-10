@@ -90,7 +90,7 @@ void Executive::task_function(Executive::task_data & task)
 				task.th_c.wait(lock);
 
 			task.state = RUNNING;
-		}//fare monitor sincro thread ed executive
+		}
 		task.function();
 	}
 	
