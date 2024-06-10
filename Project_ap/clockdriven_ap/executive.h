@@ -56,6 +56,10 @@ class Executive
 			std::function<void()> function;
 			
 			unsigned int wcet;
+
+			th_state state = IDLE;
+			
+			bool only_start = true;
 			
 			std::thread thread;
 
@@ -63,8 +67,7 @@ class Executive
 
 			std::condition_variable th_c;
 
-			th_state state = IDLE;
-			bool only_start = true;
+			
 			
 		};
 
@@ -72,16 +75,17 @@ class Executive
 		task_data ap_task; 
 
 		bool start_ = false;
+		
 		std::thread exec_thread;
 		
 		std::vector< std::vector<size_t> > frames;
 		
 		const unsigned int frame_length; // lunghezza del frame (in quanti temporali)
 		const std::chrono::milliseconds unit_time; // durata dell'unita di tempo (quanto temporale)
-
-		/**/
-		static const char* stateToString(th_state state);
 		
+		static const char* stateToString(th_state state);
+
+
 		static void task_function(task_data & task);
 		
 		void exec_function();
