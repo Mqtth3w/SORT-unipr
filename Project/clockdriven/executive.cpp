@@ -82,7 +82,7 @@ void Executive::wait()
 
 void Executive::task_function(Executive::task_data & task)
 {
-	while(true){ //definire con quale stato parte per la prima volta il tread
+	while(true){ 
 		{//monitor
 			std::unique_lock<std::mutex> lock(task.mt);
 			task.only_start ? task.only_start = false : task.state = IDLE;
@@ -100,10 +100,8 @@ void Executive::exec_function()
 {
 	size_t frame_id = 0; //long unsigned int
 	
-	/* ... */
 	try
 	{
-		//gestire executive
 		auto last = std::chrono::high_resolution_clock::now();
 		auto point = std::chrono::steady_clock::now();
 		auto next = std::chrono::high_resolution_clock::now();
@@ -144,19 +142,20 @@ void Executive::exec_function()
 			std::cout << "Time elapsed: " << elapsed.count() << "ms" << std::endl;
 			last = next;
 	
-			auto salta_switch = false;
+			
 			/* Controllo delle deadline ... */
+			auto salta_switch = false;
 			for (auto & id: frame) 
 			{
 				for (auto it = running.begin(); it != running.end(); ) 
 				{
 					if (*it == id) 
 					{
-						it = running.erase(it); // Rimuove l'elemento e ottiene l'iteratore successivo
+						it = running.erase(it); 
 						salta_switch = true;
-						continue; // Passa alla prossima iterazione del ciclo
+						break; 
 					}
-					++it; // Passa all'elemento successivo
+					++it; 
 				}
 				if (salta_switch)
 					continue;
